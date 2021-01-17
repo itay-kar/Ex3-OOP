@@ -1,2 +1,2 @@
 # Ex3-OOP
- Directed weighted graph implemntion in pyton
+ Directed weighted graph implemntion in python
