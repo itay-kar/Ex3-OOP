@@ -8,7 +8,7 @@ class Node:
         self.pos = node_pos
 
     def __repr__(self):
-        return self.__dict__.__str__()
+        return "id: " + str(self.id) + ", pos: " + str(self.pos)
 
 
 class DiGraph:
@@ -75,5 +75,4 @@ class DiGraph:
         return json.dumps(f, sort_keys=True, indent=2, default=lambda o: o.__dict__)
 
     def __repr__(self):
-        f = {"Nodes": self.Nodes, "Edges": self.out_Edges}
-        return json.dumps(f, default=lambda o: o.__dict__)
+        return "Graph : " "V: " + str(self.v_size()) + " , Edges : " + str(self.edge_size)

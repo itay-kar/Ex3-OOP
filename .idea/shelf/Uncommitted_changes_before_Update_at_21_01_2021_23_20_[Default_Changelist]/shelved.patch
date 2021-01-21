@@ -1,0 +1,323 @@
+Index: src/DiGraph.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import json\r\n\r\n\r\nclass Node:\r\n\r\n    def __init__(self, node_id: int, node_pos: tuple = None):\r\n        self.id = node_id\r\n        self.pos = node_pos\r\n\r\n    def __repr__(self):\r\n        return self.__dict__.__str__()\r\n\r\n\r\nclass DiGraph:\r\n\r\n    def __init__(self):\r\n        self.Nodes = dict()\r\n        self.in_Edges = dict()\r\n        self.out_Edges = dict()\r\n        self.mc = 0\r\n        self.edge_size = 0\r\n\r\n    def v_size(self) -> int:\r\n        return len(self.Nodes.keys())\r\n\r\n    def e_size(self) -> int:\r\n        if len(self.in_Edges.values()) == len(self.out_Edges.values()):\r\n            return len(self.in_Edges.values())\r\n        else:\r\n            return -1\r\n\r\n    def get_all_v(self) -> dict:\r\n        return self.Nodes\r\n\r\n    def all_in_edges_of_node(self, id1: int) -> dict:\r\n        return self.in_Edges[id1]\r\n\r\n    def all_out_edges_of_node(self, id1: int) -> dict:\r\n        return self.out_Edges[id1]\r\n\r\n    def get_mc(self) -> int:\r\n        return self.mc\r\n\r\n    def add_node(self, id1: int, pos: tuple = None) -> bool:\r\n        if id1 in self.Nodes.keys():\r\n            return False\r\n        else:\r\n            self.Nodes[id1] = Node(id1, pos)\r\n            self.in_Edges[id1] = dict()\r\n            self.out_Edges[id1] = dict()\r\n            self.mc += 1\r\n            return True\r\n\r\n    def add_edge(self, id1: int, id2: int, weight: float) -> bool:\r\n        if id1 not in self.Nodes.keys() or id2 not in self.Nodes.keys() or weight < 0 or id1 == id2:\r\n            return False\r\n        self.in_Edges[id2][id1] = weight\r\n        self.out_Edges[id1][id2] = weight\r\n        self.edge_size += 1\r\n        self.mc += 1\r\n        return True\r\n\r\n    def remove_edge(self, id1: int, id2: int) -> bool:\r\n        if id1 not in self.Nodes.keys() or id2 not in self.Nodes.keys() \\\r\n                or id1 == id2 or id2 not in self.out_Edges[id1].keys() or id1 not in self.in_Edges[id2].keys():\r\n            return False\r\n        del self.in_Edges[id2][id1]\r\n        del self.out_Edges[id1][id2]\r\n        self.edge_size -= 1\r\n        self.mc += 1\r\n        return True\r\n\r\n    def toJson(self):\r\n        f = {\"Nodes\": self.Nodes, \"Edges\": self.out_Edges}\r\n        return json.dumps(f, sort_keys=True, indent=2, default=lambda o: o.__dict__)\r\n\r\n    def __repr__(self):\r\n        f = {\"Nodes\": self.Nodes, \"Edges\": self.out_Edges}\r\n        return json.dumps(f, default=lambda o: o.__dict__)\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/DiGraph.py b/src/DiGraph.py
+--- a/src/DiGraph.py	(revision 7cb3be6d93ecd3418adc9225f241fc329a54dc8b)
++++ b/src/DiGraph.py	(date 1611232567110)
+@@ -8,7 +8,7 @@
+         self.pos = node_pos
+ 
+     def __repr__(self):
+-        return self.__dict__.__str__()
++        return "id: " + str(self.id) + ", pos: " + str(self.pos)
+ 
+ 
+ class DiGraph:
+@@ -75,5 +75,4 @@
+         return json.dumps(f, sort_keys=True, indent=2, default=lambda o: o.__dict__)
+ 
+     def __repr__(self):
+-        f = {"Nodes": self.Nodes, "Edges": self.out_Edges}
+-        return json.dumps(f, default=lambda o: o.__dict__)
++        return "Graph : " "V: " + str(self.v_size()) + " , Edges : " + str(self.edge_size)
+Index: src/GraphAlgo.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import json\r\nimport sys\r\nimport random\r\nimport math\r\nfrom DiGraph import DiGraph\r\nimport matplotlib.pyplot as plt\r\nfrom typing import List\r\n\r\n\r\nclass GraphAlgo:\r\n\r\n    def __init__(self, g: DiGraph = DiGraph()):\r\n        self.graph = g\r\n        self.node_dist: dict = {}\r\n\r\n    def get_graph(self) -> DiGraph:\r\n        return self.graph\r\n\r\n#  function load_from_json , this function load a Directed weighted graph from a json file into a DiGraph object\r\n    # returns True if load succeeded , False o.w.\r\n\r\n    def load_from_json(self, file_name: str) -> bool:\r\n        with open(file_name, encoding=\"utf-8\") as f:\r\n            graph_loader = json.load(f)\r\n            loaded_graph = DiGraph()\r\n            for x in graph_loader[\"Nodes\"]:\r\n                if \"pos\" in x.keys():\r\n                    loaded_graph.add_node(x[\"id\"], x[\"pos\"])\r\n                else:\r\n                    loaded_graph.add_node(x[\"id\"])\r\n\r\n            for n in graph_loader[\"Edges\"]:\r\n                loaded_graph.add_edge(n[\"src\"], n[\"dest\"], n[\"w\"])\r\n\r\n                self.graph = loaded_graph\r\n        return True\r\n\r\n# this function save a copy of graph details into a json file.\r\n\r\n    def save_to_json(self, file_name: str) -> bool:\r\n        with open(file_name, \"w+\", encoding=\"utf-8\") as file:\r\n            graph_str = self.graph.toJson()\r\n            file.write(graph_str)\r\n            file.close()\r\n            return True\r\n\r\n        return False\r\n\r\n# shortest path\r\n    def shortest_path(self, id1: int, id2: int) -> (float, list):\r\n        for x in self.graph.Nodes.keys():\r\n            self.node_dist[x] = self.dijkstra_algo(x, id2)\r\n\r\n        if self.node_dist[id1][id2] is sys.maxsize:\r\n            return float('inf'), [q ]\r\n\r\n        distance = self.node_dist[id1][id2]\r\n        src = id1\r\n        nodes_route = [src]\r\n\r\n        while src != id2:\r\n            for x in self.graph.out_Edges[src].keys():\r\n                if x == id2:\r\n                    nodes_route.append(x)\r\n\r\n                    return self.node_dist[id1][id2], nodes_route\r\n\r\n                if self.node_dist[x] is not None and \\\r\n                        self.node_dist[x][id2] is not sys.maxsize and \\\r\n                        math.isclose(distance, self.node_dist[src][x] + self.node_dist[x][id2]):\r\n                    nodes_route.append(x)\r\n                    distance -= self.node_dist[src][x]\r\n                    src = x\r\n\r\n        return None\r\n\r\n#    connected_comp\r\n\r\n    def connected_component(self, id1: int) -> list:\r\n        scc = [id1]\r\n        for x in self.graph.Nodes.keys():\r\n            self.node_dist[x] = self.dijkstra_algo(x, id1)\r\n\r\n        for x in self.graph.Nodes.keys():\r\n            if self.node_dist[id1][x] is not sys.maxsize and \\\r\n                    self.node_dist[x][id1] is not sys.maxsize and x not in scc:\r\n                scc.append(x)\r\n        return scc\r\n\r\n# connected_comps\r\n    def connected_components(self) -> List[list]:\r\n        graph_scc: List = []\r\n\r\n        for x in self.graph.Nodes.keys():\r\n            k = 0\r\n            for j in range(len(graph_scc)):\r\n                if x in graph_scc[j]:\r\n                    k = 1\r\n            if k != 1:\r\n                graph_scc.insert(x, list(self.connected_component(x)))\r\n\r\n        return graph_scc\r\n\r\n# min distance used for dijkstra algo\r\n    def minDistance(self, dist, node_set):\r\n\r\n        # Initilaize m/inimum distance for next node\r\n        node_distance = sys.maxsize\r\n        min_key = -1\r\n\r\n        # Search not nearest vertex not in the\r\n        # shortest path tree\r\n        for node_key in self.graph.Nodes.keys():\r\n            if dist[node_key] < node_distance and node_set[node_key] is False:\r\n                node_distance = dist[node_key]\r\n                min_key = node_key\r\n\r\n        return min_key\r\n\r\n    # dijkstra algorithm\r\n\r\n    def dijkstra_algo(self, src, dest):\r\n        dist = [sys.maxsize] * len(self.graph.Nodes)\r\n        dist[src] = 0\r\n        node_set = [False] * len(self.graph.Nodes)\r\n\r\n        for i in range(len(self.graph.Nodes)):\r\n            u = self.minDistance(dist, node_set)\r\n            if u == -1:\r\n                break\r\n\r\n            # Put the minimum distance vertex in the\r\n            # shotest path tree\r\n            node_set[u] = True\r\n\r\n            # Update dist value of the adjacent vertices\r\n            # of the picked vertex only if the current\r\n            # distance is greater than new distance and\r\n            # the vertex in not in the shotest path tree\r\n            for key in self.graph.out_Edges[u].keys():\r\n                if self.graph.out_Edges[u][key] > 0 and \\\r\n                        node_set[key] is False and \\\r\n                        dist[key] > dist[u] + self.graph.out_Edges[u][key]:\r\n                    dist[key] = dist[u] + self.graph.out_Edges[u][key]\r\n\r\n        return dist\r\n\r\n    # this part plots the graph details about how it works should be added\r\n\r\n    def plot_graph(self) -> None:\r\n        all_nodes = self.graph.get_all_v()\r\n        x = []\r\n        y = []\r\n        for i in all_nodes.values():\r\n            if i.pos is not None:\r\n                x.append(float(i.pos.split(\",\")[0]))\r\n                y.append(float(i.pos.split(\",\")[1]))\r\n            else:\r\n                x_random = random.random()\r\n                y_random = random.random()\r\n                i.pos = (str(x_random) + \",\" + str(y_random) + \",\" + str(0.0))\r\n                x.append(x_random)\r\n                y.append(y_random)\r\n\r\n        n = [j for j in all_nodes.keys()]\r\n        fig, ax = plt.subplots()\r\n        ax.scatter(x, y)\r\n        for p, txt in enumerate(n):\r\n            ax.annotate(n[p], (x[p], y[p]))\r\n\r\n        for i in all_nodes.keys():\r\n            for j in self.graph.all_out_edges_of_node(i).keys():\r\n                x1_coordinate = float(str(all_nodes.get(i).pos.split(\",\")[0]))\r\n                y1_coordinate = float(str(all_nodes.get(i).pos.split(\",\")[1]))\r\n                x2_coordinate = float(str(all_nodes.get(j).pos.split(\",\")[0]))\r\n                y2_coordinate = float(str(all_nodes.get(j).pos.split(\",\")[1]))\r\n                plt.arrow(x1_coordinate, y1_coordinate, (x2_coordinate - x1_coordinate),\r\n                          (y2_coordinate - y1_coordinate), length_includes_head=True, width=0.00001,\r\n                          head_width=0.00030, head_length=0.0003, color='black')\r\n\r\n        plt.ylabel(\"y axis\")\r\n        plt.title(\"OOP_Ex3\")\r\n        plt.xlabel(\"x axis\")\r\n        plt.title(\"My Graph\")\r\n        plt.show()\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/GraphAlgo.py b/src/GraphAlgo.py
+--- a/src/GraphAlgo.py	(revision 7cb3be6d93ecd3418adc9225f241fc329a54dc8b)
++++ b/src/GraphAlgo.py	(date 1611232567145)
+@@ -16,7 +16,7 @@
+     def get_graph(self) -> DiGraph:
+         return self.graph
+ 
+-#  function load_from_json , this function load a Directed weighted graph from a json file into a DiGraph object
++    #  function load_from_json , this function load a Directed weighted graph from a json file into a DiGraph object
+     # returns True if load succeeded , False o.w.
+ 
+     def load_from_json(self, file_name: str) -> bool:
+@@ -35,7 +35,7 @@
+                 self.graph = loaded_graph
+         return True
+ 
+-# this function save a copy of graph details into a json file.
++    # this function save a copy of graph details into a json file.
+ 
+     def save_to_json(self, file_name: str) -> bool:
+         with open(file_name, "w+", encoding="utf-8") as file:
+@@ -46,13 +46,13 @@
+ 
+         return False
+ 
+-# shortest path
++    # shortest path
+     def shortest_path(self, id1: int, id2: int) -> (float, list):
+         for x in self.graph.Nodes.keys():
+             self.node_dist[x] = self.dijkstra_algo(x, id2)
+ 
+         if self.node_dist[id1][id2] is sys.maxsize:
+-            return float('inf'), [q ]
++            return float('inf'), []
+ 
+         distance = self.node_dist[id1][id2]
+         src = id1
+@@ -74,7 +74,7 @@
+ 
+         return None
+ 
+-#    connected_comp
++    #    connected_comp
+ 
+     def connected_component(self, id1: int) -> list:
+         scc = [id1]
+@@ -87,7 +87,7 @@
+                 scc.append(x)
+         return scc
+ 
+-# connected_comps
++    # connected_comps
+     def connected_components(self) -> List[list]:
+         graph_scc: List = []
+ 
+@@ -101,14 +101,13 @@
+ 
+         return graph_scc
+ 
+-# min distance used for dijkstra algo
++    # min distance used for dijkstra algo
+     def minDistance(self, dist, node_set):
+ 
+-        # Initilaize m/inimum distance for next node
++        # Initialize minimum distance for next node
+         node_distance = sys.maxsize
+         min_key = -1
+ 
+-        # Search not nearest vertex not in the
+         # shortest path tree
+         for node_key in self.graph.Nodes.keys():
+             if dist[node_key] < node_distance and node_set[node_key] is False:
+@@ -156,7 +155,7 @@
+                 x.append(float(i.pos.split(",")[0]))
+                 y.append(float(i.pos.split(",")[1]))
+             else:
+-                x_random = random.random()
++                x_random = random.random() + 35.0
+                 y_random = random.random()
+                 i.pos = (str(x_random) + "," + str(y_random) + "," + str(0.0))
+                 x.append(x_random)
+@@ -176,7 +175,7 @@
+                 y2_coordinate = float(str(all_nodes.get(j).pos.split(",")[1]))
+                 plt.arrow(x1_coordinate, y1_coordinate, (x2_coordinate - x1_coordinate),
+                           (y2_coordinate - y1_coordinate), length_includes_head=True, width=0.00001,
+-                          head_width=0.00030, head_length=0.0003, color='black')
++                          head_width=0.00020, head_length=0.0003, color='Black')
+ 
+         plt.ylabel("y axis")
+         plt.title("OOP_Ex3")
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"ChangeListManager\">\r\n    <list default=\"true\" id=\"f5704a53-957a-42f0-837f-cc78de4ad96b\" name=\"Default Changelist\" comment=\"\" />\r\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\r\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\r\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\r\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\r\n  </component>\r\n  <component name=\"Git.Settings\">\r\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\r\n  </component>\r\n  <component name=\"ProjectId\" id=\"1n4v1WjpxttFE4YquFsGtSB8bqJ\" />\r\n  <component name=\"ProjectLevelVcsManager\" settingsEditedManually=\"true\" />\r\n  <component name=\"ProjectViewState\">\r\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\r\n    <option name=\"showLibraryContents\" value=\"true\" />\r\n  </component>\r\n  <component name=\"PropertiesComponent\">\r\n    <property name=\"RunOnceActivity.OpenProjectViewOnStart\" value=\"true\" />\r\n    <property name=\"RunOnceActivity.ShowReadmeOnStart\" value=\"true\" />\r\n    <property name=\"last_opened_file_path\" value=\"$PROJECT_DIR$/src/Ex3_main.py\" />\r\n  </component>\r\n  <component name=\"RecentsManager\">\r\n    <key name=\"MoveFile.RECENT_KEYS\">\r\n      <recent name=\"D:\\Software development\\Python\\Ex3-OOP\" />\r\n    </key>\r\n  </component>\r\n  <component name=\"RunManager\">\r\n    <configuration name=\"Ex3_main\" type=\"PythonConfigurationType\" factoryName=\"Python\" nameIsGenerated=\"true\">\r\n      <module name=\"Ex3-OOP\" />\r\n      <option name=\"INTERPRETER_OPTIONS\" value=\"\" />\r\n      <option name=\"PARENT_ENVS\" value=\"true\" />\r\n      <envs>\r\n        <env name=\"PYTHONUNBUFFERED\" value=\"1\" />\r\n      </envs>\r\n      <option name=\"SDK_HOME\" value=\"\" />\r\n      <option name=\"WORKING_DIRECTORY\" value=\"$PROJECT_DIR$/src\" />\r\n      <option name=\"IS_MODULE_SDK\" value=\"true\" />\r\n      <option name=\"ADD_CONTENT_ROOTS\" value=\"true\" />\r\n      <option name=\"ADD_SOURCE_ROOTS\" value=\"true\" />\r\n      <option name=\"SCRIPT_NAME\" value=\"$PROJECT_DIR$/src/Ex3_main.py\" />\r\n      <option name=\"PARAMETERS\" value=\"\" />\r\n      <option name=\"SHOW_COMMAND_LINE\" value=\"false\" />\r\n      <option name=\"EMULATE_TERMINAL\" value=\"false\" />\r\n      <option name=\"MODULE_MODE\" value=\"false\" />\r\n      <option name=\"REDIRECT_INPUT\" value=\"false\" />\r\n      <option name=\"INPUT_FILE\" value=\"\" />\r\n      <method v=\"2\" />\r\n    </configuration>\r\n  </component>\r\n  <component name=\"SpellCheckerSettings\" RuntimeDictionaries=\"0\" Folders=\"0\" CustomDictionaries=\"0\" DefaultDictionary=\"application-level\" UseSingleDictionary=\"true\" transferred=\"true\" />\r\n  <component name=\"TaskManager\">\r\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\r\n      <changelist id=\"f5704a53-957a-42f0-837f-cc78de4ad96b\" name=\"Default Changelist\" comment=\"\" />\r\n      <created>1610661962437</created>\r\n      <option name=\"number\" value=\"Default\" />\r\n      <option name=\"presentableId\" value=\"Default\" />\r\n      <updated>1610661962437</updated>\r\n    </task>\r\n    <servers />\r\n  </component>\r\n  <component name=\"Vcs.Log.Tabs.Properties\">\r\n    <option name=\"TAB_STATES\">\r\n      <map>\r\n        <entry key=\"MAIN\">\r\n          <value>\r\n            <State />\r\n          </value>\r\n        </entry>\r\n      </map>\r\n    </option>\r\n  </component>\r\n  <component name=\"XDebuggerManager\">\r\n    <breakpoint-manager>\r\n      <breakpoints>\r\n        <line-breakpoint enabled=\"true\" suspend=\"THREAD\" type=\"python-line\">\r\n          <url>file://$PROJECT_DIR$/src/Ex3_main.py</url>\r\n          <line>4</line>\r\n          <option name=\"timeStamp\" value=\"2\" />\r\n        </line-breakpoint>\r\n        <line-breakpoint enabled=\"true\" suspend=\"THREAD\" type=\"python-line\">\r\n          <url>file://$PROJECT_DIR$/src/Ex3_main.py</url>\r\n          <line>86</line>\r\n          <option name=\"timeStamp\" value=\"15\" />\r\n        </line-breakpoint>\r\n        <line-breakpoint enabled=\"true\" suspend=\"THREAD\" type=\"python-line\">\r\n          <url>file://$PROJECT_DIR$/src/Ex3_main.py</url>\r\n          <line>63</line>\r\n          <option name=\"timeStamp\" value=\"18\" />\r\n        </line-breakpoint>\r\n        <line-breakpoint enabled=\"true\" suspend=\"THREAD\" type=\"python-line\">\r\n          <url>file://$PROJECT_DIR$/src/Ex3_main.py</url>\r\n          <line>61</line>\r\n          <option name=\"timeStamp\" value=\"19\" />\r\n        </line-breakpoint>\r\n        <line-breakpoint enabled=\"true\" suspend=\"THREAD\" type=\"python-line\">\r\n          <url>file://$PROJECT_DIR$/src/GraphAlgo.py</url>\r\n          <line>93</line>\r\n          <option name=\"timeStamp\" value=\"22\" />\r\n        </line-breakpoint>\r\n        <line-breakpoint enabled=\"true\" suspend=\"THREAD\" type=\"python-line\">\r\n          <url>file://$PROJECT_DIR$/src/Ex3_main.py</url>\r\n          <line>60</line>\r\n          <option name=\"timeStamp\" value=\"23\" />\r\n        </line-breakpoint>\r\n        <line-breakpoint enabled=\"true\" suspend=\"THREAD\" type=\"python-line\">\r\n          <url>file://$PROJECT_DIR$/src/GraphAlgo.py</url>\r\n          <line>99</line>\r\n          <option name=\"timeStamp\" value=\"24\" />\r\n        </line-breakpoint>\r\n        <line-breakpoint enabled=\"true\" suspend=\"THREAD\" type=\"python-line\">\r\n          <url>file://$PROJECT_DIR$/src/GraphAlgo.py</url>\r\n          <line>81</line>\r\n          <option name=\"timeStamp\" value=\"25\" />\r\n        </line-breakpoint>\r\n      </breakpoints>\r\n    </breakpoint-manager>\r\n    <watches-manager>\r\n      <configuration name=\"PythonConfigurationType\">\r\n        <watch expression=\"self.graph.out_Edges\" />\r\n      </configuration>\r\n    </watches-manager>\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision 7cb3be6d93ecd3418adc9225f241fc329a54dc8b)
++++ b/.idea/workspace.xml	(date 1611242140851)
+@@ -1,11 +1,23 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
+   <component name="ChangeListManager">
+-    <list default="true" id="f5704a53-957a-42f0-837f-cc78de4ad96b" name="Default Changelist" comment="" />
++    <list default="true" id="f5704a53-957a-42f0-837f-cc78de4ad96b" name="Default Changelist" comment="">
++      <change afterPath="$PROJECT_DIR$/Tests/DiGraph_Test.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/src/DiGraph.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/DiGraph.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/src/GraphAlgo.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/GraphAlgo.py" afterDir="false" />
++    </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+     <option name="LAST_RESOLUTION" value="IGNORE" />
++  </component>
++  <component name="FileTemplateManagerImpl">
++    <option name="RECENT_TEMPLATES">
++      <list>
++        <option value="Python Unit Test" />
++      </list>
++    </option>
+   </component>
+   <component name="Git.Settings">
+     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+@@ -20,13 +32,14 @@
+     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+     <property name="last_opened_file_path" value="$PROJECT_DIR$/src/Ex3_main.py" />
++    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+   </component>
+   <component name="RecentsManager">
+     <key name="MoveFile.RECENT_KEYS">
+       <recent name="D:\Software development\Python\Ex3-OOP" />
+     </key>
+   </component>
+-  <component name="RunManager">
++  <component name="RunManager" selected="Python tests.Unittests for DiGraph_Test.DiGraphTest">
+     <configuration name="Ex3_main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+       <module name="Ex3-OOP" />
+       <option name="INTERPRETER_OPTIONS" value="" />
+@@ -48,6 +61,55 @@
+       <option name="INPUT_FILE" value="" />
+       <method v="2" />
+     </configuration>
++    <configuration name="Unittests for DiGraph_Test.DiGraphTest" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
++      <module name="Ex3-OOP" />
++      <option name="INTERPRETER_OPTIONS" value="" />
++      <option name="PARENT_ENVS" value="true" />
++      <option name="SDK_HOME" value="" />
++      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Tests" />
++      <option name="IS_MODULE_SDK" value="true" />
++      <option name="ADD_CONTENT_ROOTS" value="true" />
++      <option name="ADD_SOURCE_ROOTS" value="true" />
++      <option name="_new_additionalArguments" value="&quot;&quot;" />
++      <option name="_new_target" value="&quot;DiGraph_Test.DiGraphTest&quot;" />
++      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
++      <method v="2" />
++    </configuration>
++    <configuration name="Unittests for Tests.DiGraph_Test.digraphtest" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
++      <module name="Ex3-OOP" />
++      <option name="INTERPRETER_OPTIONS" value="" />
++      <option name="PARENT_ENVS" value="true" />
++      <option name="SDK_HOME" value="" />
++      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Tests" />
++      <option name="IS_MODULE_SDK" value="true" />
++      <option name="ADD_CONTENT_ROOTS" value="true" />
++      <option name="ADD_SOURCE_ROOTS" value="true" />
++      <option name="_new_additionalArguments" value="&quot;&quot;" />
++      <option name="_new_target" value="&quot;Tests.DiGraph_Test.digraphtest&quot;" />
++      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
++      <method v="2" />
++    </configuration>
++    <configuration name="Unittests for Tests.DiGraph_Test.digraphtest" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
++      <module name="Ex3-OOP" />
++      <option name="INTERPRETER_OPTIONS" value="" />
++      <option name="PARENT_ENVS" value="true" />
++      <option name="SDK_HOME" value="" />
++      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Tests" />
++      <option name="IS_MODULE_SDK" value="true" />
++      <option name="ADD_CONTENT_ROOTS" value="true" />
++      <option name="ADD_SOURCE_ROOTS" value="true" />
++      <option name="_new_additionalArguments" value="&quot;&quot;" />
++      <option name="_new_target" value="&quot;Tests.DiGraph_Test.digraphtest&quot;" />
++      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
++      <method v="2" />
++    </configuration>
++    <recent_temporary>
++      <list>
++        <item itemvalue="Python tests.Unittests for DiGraph_Test.DiGraphTest" />
++        <item itemvalue="Python tests.Unittests for Tests.DiGraph_Test.digraphtest" />
++        <item itemvalue="Python tests.Unittests for Tests.DiGraph_Test.digraphtest" />
++      </list>
++    </recent_temporary>
+   </component>
+   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+   <component name="TaskManager">
+@@ -70,6 +132,7 @@
+         </entry>
+       </map>
+     </option>
++    <option name="oldMeFiltersMigrated" value="true" />
+   </component>
+   <component name="XDebuggerManager">
+     <breakpoint-manager>
+@@ -85,34 +148,44 @@
+           <option name="timeStamp" value="15" />
+         </line-breakpoint>
+         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
++          <url>file://$PROJECT_DIR$/src/GraphAlgo.py</url>
++          <line>148</line>
++          <option name="timeStamp" value="26" />
++        </line-breakpoint>
++        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+           <url>file://$PROJECT_DIR$/src/Ex3_main.py</url>
+-          <line>63</line>
+-          <option name="timeStamp" value="18" />
++          <line>49</line>
++          <option name="timeStamp" value="27" />
+         </line-breakpoint>
+         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+           <url>file://$PROJECT_DIR$/src/Ex3_main.py</url>
+-          <line>61</line>
+-          <option name="timeStamp" value="19" />
++          <line>64</line>
++          <option name="timeStamp" value="28" />
+         </line-breakpoint>
+         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+           <url>file://$PROJECT_DIR$/src/GraphAlgo.py</url>
+-          <line>93</line>
+-          <option name="timeStamp" value="22" />
++          <line>169</line>
++          <option name="timeStamp" value="29" />
+         </line-breakpoint>
+         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+-          <url>file://$PROJECT_DIR$/src/Ex3_main.py</url>
+-          <line>60</line>
+-          <option name="timeStamp" value="23" />
++          <url>file://$PROJECT_DIR$/src/GraphAlgo.py</url>
++          <line>164</line>
++          <option name="timeStamp" value="31" />
++        </line-breakpoint>
++        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
++          <url>file://$PROJECT_DIR$/Tests/DiGraph_Test.py</url>
++          <line>6</line>
++          <option name="timeStamp" value="32" />
+         </line-breakpoint>
+         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+-          <url>file://$PROJECT_DIR$/src/GraphAlgo.py</url>
+-          <line>99</line>
+-          <option name="timeStamp" value="24" />
++          <url>file://$PROJECT_DIR$/Tests/DiGraph_Test.py</url>
++          <line>7</line>
++          <option name="timeStamp" value="33" />
+         </line-breakpoint>
+         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+-          <url>file://$PROJECT_DIR$/src/GraphAlgo.py</url>
+-          <line>81</line>
+-          <option name="timeStamp" value="25" />
++          <url>file://$PROJECT_DIR$/Tests/DiGraph_Test.py</url>
++          <line>8</line>
++          <option name="timeStamp" value="34" />
+         </line-breakpoint>
+       </breakpoints>
+     </breakpoint-manager>
+Index: Tests/DiGraph_Test.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Tests/DiGraph_Test.py b/Tests/DiGraph_Test.py
+new file mode 100644
+--- /dev/null	(date 1611241828260)
++++ b/Tests/DiGraph_Test.py	(date 1611241828260)
+@@ -0,0 +1,15 @@
++import unittest
++from src import DiGraph
++
++
++class DiGraphTest(unittest.TestCase):
++
++    def AddNode(self):
++        graph = DiGraph.DiGraph
++        pos = "0,0,0"
++        graph.add_node(1, pos)
++        self.assertEqual(1, graph.v_size())
++
++
++if __name__ == '__main__':
++    unittest.main()

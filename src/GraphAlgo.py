@@ -16,7 +16,7 @@ class GraphAlgo:
     def get_graph(self) -> DiGraph:
         return self.graph
 
-#  function load_from_json , this function load a Directed weighted graph from a json file into a DiGraph object
+    #  function load_from_json , this function load a Directed weighted graph from a json file into a DiGraph object
     # returns True if load succeeded , False o.w.
 
     def load_from_json(self, file_name: str) -> bool:
@@ -35,7 +35,7 @@ class GraphAlgo:
                 self.graph = loaded_graph
         return True
 
-# this function save a copy of graph details into a json file.
+    # this function save a copy of graph details into a json file.
 
     def save_to_json(self, file_name: str) -> bool:
         with open(file_name, "w+", encoding="utf-8") as file:
@@ -46,13 +46,13 @@ class GraphAlgo:
 
         return False
 
-# shortest path
+    # shortest path
     def shortest_path(self, id1: int, id2: int) -> (float, list):
         for x in self.graph.Nodes.keys():
             self.node_dist[x] = self.dijkstra_algo(x, id2)
 
         if self.node_dist[id1][id2] is sys.maxsize:
-            return float('inf'), [q ]
+            return float('inf'), []
 
         distance = self.node_dist[id1][id2]
         src = id1
@@ -74,7 +74,7 @@ class GraphAlgo:
 
         return None
 
-#    connected_comp
+    #    connected_comp
 
     def connected_component(self, id1: int) -> list:
         scc = [id1]
@@ -87,7 +87,7 @@ class GraphAlgo:
                 scc.append(x)
         return scc
 
-# connected_comps
+    # connected_comps
     def connected_components(self) -> List[list]:
         graph_scc: List = []
 
@@ -101,14 +101,13 @@ class GraphAlgo:
 
         return graph_scc
 
-# min distance used for dijkstra algo
+    # min distance used for dijkstra algo
     def minDistance(self, dist, node_set):
 
-        # Initilaize m/inimum distance for next node
+        # Initialize minimum distance for next node
         node_distance = sys.maxsize
         min_key = -1
 
-        # Search not nearest vertex not in the
         # shortest path tree
         for node_key in self.graph.Nodes.keys():
             if dist[node_key] < node_distance and node_set[node_key] is False:
@@ -156,7 +155,7 @@ class GraphAlgo:
                 x.append(float(i.pos.split(",")[0]))
                 y.append(float(i.pos.split(",")[1]))
             else:
-                x_random = random.random()
+                x_random = random.random() + 35.0
                 y_random = random.random()
                 i.pos = (str(x_random) + "," + str(y_random) + "," + str(0.0))
                 x.append(x_random)
@@ -176,7 +175,7 @@ class GraphAlgo:
                 y2_coordinate = float(str(all_nodes.get(j).pos.split(",")[1]))
                 plt.arrow(x1_coordinate, y1_coordinate, (x2_coordinate - x1_coordinate),
                           (y2_coordinate - y1_coordinate), length_includes_head=True, width=0.00001,
-                          head_width=0.00030, head_length=0.0003, color='black')
+                          head_width=0.00020, head_length=0.0003, color='Black')
 
         plt.ylabel("y axis")
         plt.title("OOP_Ex3")
